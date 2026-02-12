@@ -28,24 +28,13 @@ export default async function handler(req, res) {
       return res.json({ authorized: false, reason: "签名错误（防伪造校验）" })
     }
 
-    // 2. Roblox API 校验：确保 userId 和用户名真实匹配（防伪造账号）
-    let verifiedUsername
-    try {
-      const rblxResponse = await fetch(`https://users.roblox.com/v1/users/${userId}`)
-      if (!rblxResponse.ok) throw new Error("Roblox API 访问失败")
-      const rblxData = await rblxResponse.json()
-      verifiedUsername = rblxData.name // 取 Roblox 官方返回的用户名
-    } catch (apiErr) {
-      return res.json({ authorized: false, reason: "Roblox 身份验证失败: " + apiErr.message })
-    }
-
-    // 3. 白名单校验：用官方用户名匹配（避免客户端传假用户名）
-    const allowed = WHITELIST.includes(verifiedUsername)
+    // 2. 直接使用客户端传来的用户名进行白名单校验（绕过Roblox API）
+    const allowed = WHITELIST.includes(username)
 
     return res.json({
       authorized: allowed,
       level: allowed ? "vip" : "none",
-      reason: allowed ? "ok" : "不在白名单（官方用户名：" + verifiedUsername + "）"
+      reason: allowed ? "ok" : "不在白名单（客户端用户名：" + username + "）"
     })
 
   } catch (e) {
