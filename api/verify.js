@@ -1,61 +1,68 @@
-export default async function handler(req, res) {
+export const config = {
+  runtime: 'edge', // 明确指定 Edge Runtime
+};
+
+export default async function handler(request) {
   // 处理 GET，方便浏览器调试
-  if (req.method === 'GET') {
-    return res.json({
+  if (request.method === 'GET') {
+    return new Response(JSON.stringify({
       authorized: false,
       reason: '请使用 POST 请求'
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
   }
 
   // 只允许 POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({
       authorized: false,
       reason: 'Method not allowed'
+    }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
   }
 
   try {
-    // 1. 先检查请求体是否存在
-    if (!req.body) {
-      return res.json({
-        authorized: false,
-        reason: '请求体为空'
-      });
-    }
-
-    // 2. 尝试解析 JSON，捕获解析错误
-    let body;
-    try {
-      body = await req.json();
-    } catch (parseError) {
-      return res.json({
-        authorized: false,
-        reason: 'JSON 解析失败: ' + parseError.message
-      });
-    }
-
+    // 1. 解析 JSON 请求体
+    const body = await request.json();
     const { userId, username, sign } = body;
 
-    // 3. 检查必要字段
+    // 2. 检查必要字段
     if (!userId || !username || !sign) {
-      return res.json({
+      return new Response(JSON.stringify({
         authorized: false,
         reason: `缺少参数: userId=${userId}, username=${username}, sign=${sign}`
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
     }
 
-    // 4. 验证签名
+    // 3. 验证签名
     const SECRET = "eyeskeyforcheck";
     const expectedSign = (userId.toString() + SECRET).substring(0, 32);
     if (sign !== expectedSign) {
-      return res.json({
+      return new Response(JSON.stringify({
         authorized: false,
         reason: `签名不匹配: 期望 "${expectedSign}", 收到 "${sign}"`
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
     }
 
-    // 5. 验证白名单
+    // 4. 验证白名单
     const WHITELIST = [
       "zis96961",
       "zis9694",
@@ -74,23 +81,39 @@ export default async function handler(req, res) {
     ];
 
     if (!WHITELIST.includes(username)) {
-      return res.json({
+      return new Response(JSON.stringify({
         authorized: false,
         reason: `用户 "${username}" 不在白名单中`
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
     }
 
     // 全部通过
-    return res.json({
+    return new Response(JSON.stringify({
       authorized: true,
       level: "VIP",
       reason: `欢迎回来, ${username}!`
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
   } catch (error) {
-    return res.json({
+    return new Response(JSON.stringify({
       authorized: false,
       reason: "服务器内部错误: " + error.message
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
   }
 }
+
