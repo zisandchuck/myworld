@@ -1,24 +1,73 @@
-// 测试模式：所有请求都直接通过
 export default async function handler(req, res) {
+  // 只允许 POST 请求
   if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      authorized: false, 
-      reason: '仅支持POST请求' 
+    return res.status(405).json({
+      authorized: false,
+      reason: '仅支持 POST 请求'
     });
   }
 
   try {
-    // 直接返回通过，不做任何校验
+    // 解析客户端发送的 JSON 数据
+    const { userId, username, sign } = req.body;
+
+    // 检查必要字段是否存在
+    if (!userId || !username || !sign) {
+      return res.json({
+        authorized: false,
+        reason: '缺少必要参数'
+      });
+    }
+
+    // 你的密钥（和客户端保持一致）
+    const SECRET = "eyeskeyforcheck";
+    // 你的白名单（用户名列表，确保你的账号在列）
+    const WHITELIST = [
+      "zis96961",
+      "zis9694",
+      "sjwuxnshi",
+      "lamluoyi",
+      "114514robloxt",
+      "nnmm12511",
+      "gxv_gxg",
+      "laobider123456",
+      "cTc_acQ",
+      "cTcacQ",
+      "vvvvssss88",
+      "hdhdjd87648",
+      "zis96967",
+      "zis9494" // 把你的用户名 zis9494 也加进去！
+    ];
+
+    // 1. 验证签名是否正确
+    const expectedSign = (userId.toString() + SECRET).substring(0, 32);
+    if (sign !== expectedSign) {
+      return res.json({
+        authorized: false,
+        reason: '签名验证失败'
+      });
+    }
+
+    // 2. 验证用户名是否在白名单中
+    if (!WHITELIST.includes(username)) {
+      return res.json({
+        authorized: false,
+        reason: '用户 ' + username + ' 不在白名单中'
+      });
+    }
+
+    // 所有验证通过，返回成功
     return res.json({
       authorized: true,
-      level: "test_vip",
-      reason: "测试模式，所有请求都通过"
+      level: "VIP",
+      reason: "欢迎回来, " + username + "!"
     });
 
   } catch (error) {
+    // 捕获所有异常，返回详细错误信息
     return res.json({
       authorized: false,
-      reason: "服务器内部错误：" + error.message
+      reason: "服务器错误: " + error.message
     });
   }
 }
