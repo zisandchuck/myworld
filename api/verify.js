@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       return res.json({ authorized: false, reason: "校验失败" })
     }
 
-    // 验证白名单（现在用用户名匹配）
+    // 验证白名单（用用户名匹配）
     const allowed = WHITELIST.includes(username)
 
     return res.json({
@@ -44,18 +44,6 @@ export default async function handler(req, res) {
 
   } catch (e) {
     return res.json({ authorized: false, reason: "服务器错误: " + e.message })
-  }
-}
-    const allowed = WHITELIST.includes(Number(userId))
-
-    return res.json({
-      authorized: allowed,
-      level: allowed ? "vip" : "none",
-      reason: allowed ? "ok" : "不在白名单"
-    })
-
-  } catch (e) {
-    return res.json({ authorized: false, reason: "服务器错误" })
   }
 }
 
